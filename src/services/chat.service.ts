@@ -3,16 +3,22 @@ import { generateReply } from "./llm.service";
 import { LLMMessage } from "../types/chat";
 
 export async function handleChatMessage(message: string, sessionId?: string) {
-  if (!message.trim()) {
+  if (!message || !message.trim()) {
     throw new Error("Message cannot be empty");
   }
 
-  const conversation = sessionId
-    ? await prisma.conversation.findUnique({ where: { id: sessionId } })
-    : await prisma.conversation.create({ data: {} });
+  let conversation;
 
-  if (!conversation) {
-    throw new Error("Conversation not found");
+  if (!sessionId) {
+    conversation = await prisma.conversation.create({ data: {} });
+  } else {
+    conversation = await prisma.conversation.findUnique({
+      where: { id: sessionId },
+    });
+
+    if (!conversation) {
+      throw new Error("Conversation not found");
+    }
   }
 
   await prisma.message.create({
@@ -46,5 +52,29 @@ export async function handleChatMessage(message: string, sessionId?: string) {
   return {
     reply,
     sessionId: conversation.id,
+  };
+}
+
+export async function getMessagesBySession(sessionId: string) {
+  if (!sessionId) {
+    throw new Error("Session ID is required");
+  }
+
+  const conversation = await prisma.conversation.findUnique({
+    where: { id: sessionId },
+    include: {
+      messages: {
+        orderBy: { createdAt: "asc" },
+      },
+    },
+  });
+
+  if (!conversation) {
+    throw new Error("Conversation not found");
+  }
+
+  return {
+    sessionId: conversation.id,
+    messages: conversation.messages,
   };
 }
