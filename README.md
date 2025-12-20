@@ -32,3 +32,8 @@ GEMINI_API_KEY= your_key
 ```bash
 npx prisma migrate dev --name init
 ```
+
+5. Frontend Link
+```
+https://github.com/samarjit-singh/spur-ai-chat-frontend
+```
