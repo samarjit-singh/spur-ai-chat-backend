@@ -1,6 +1,7 @@
 import { prisma } from "../prisma/client";
 import { generateReply } from "./llm.service";
 import { LLMMessage } from "../types/chat";
+import { Prisma } from "@prisma/client";
 
 export async function handleChatMessage(message: string, sessionId?: string) {
   if (!message || !message.trim()) {
@@ -29,10 +30,12 @@ export async function handleChatMessage(message: string, sessionId?: string) {
     },
   });
 
-  const history = await prisma.message.findMany({
-    where: { conversationId: conversation.id },
-    orderBy: { createdAt: "asc" },
-  });
+  const history: Prisma.MessageGetPayload<{}>[] = await prisma.message.findMany(
+    {
+      where: { conversationId: conversation.id },
+      orderBy: { createdAt: "asc" },
+    }
+  );
 
   const formattedHistory: LLMMessage[] = history.map((m) => ({
     role: m.sender === "user" ? "user" : "model",
